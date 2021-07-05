@@ -18,6 +18,7 @@ const PtoP: VFC = () => {
   const [myId, setMyId] = useState('')
   const [theirId, setTheirId] = useState('')
   const [isTalking, setIsTalking] = useState(false)
+  const [testCount, setTestCount] = useState(0)
 
   peer.on('open', () => {
     console.log('skywayとの同期開始')
@@ -67,6 +68,7 @@ const PtoP: VFC = () => {
     if (!isTalking) return
     mediaConnection.close()
   }
+
   const handleDestroy = () => {
     console.log('破棄')
     peer.destroy()
@@ -85,6 +87,7 @@ const PtoP: VFC = () => {
           <button onClick={handleCall}>発信</button>
           <button onClick={handleClose}>切断</button>
           <button onClick={handleDestroy}>⚠破棄⚠</button>
+          <button onClick={() => setTestCount((t) => t + 1)}>test</button>
         </div>
         <div>
           <video width="400px" autoPlay muted playsInline ref={remoteVideoRef}></video>
