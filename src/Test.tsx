@@ -1,4 +1,4 @@
-import React, { VFC, useState, useRef } from 'react'
+import React, { VFC, useState, useRef, useEffect } from 'react'
 
 let globalVal: HTMLInputElement
 console.log('global実行')
@@ -7,7 +7,11 @@ const Test: VFC = () => {
   const ref2 = useRef<HTMLInputElement>(null)
   const [inputRef, setInputRef] = useState('')
 
-  let localVal: string
+  const [array, setArray] = useState([
+    { id: 1, name: '1' },
+    { id: 2, name: '2' },
+    { id: 3, name: '3' }
+  ])
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log('hello', ref.current?.value)
@@ -17,9 +21,14 @@ const Test: VFC = () => {
       v.value = '1234567890'
       console.log('refを代入したvを変更→v:', v?.value, 'ref:', ref.current.value, 'state:', inputRef)
     }
-
     if (ref.current) globalVal = ref.current
   }
+
+  console.log('state', array)
+
+  useEffect(() => {
+    setArray((beforeArray) => beforeArray.filter((a) => a.id !== 2))
+  }, [])
 
   return (
     <>

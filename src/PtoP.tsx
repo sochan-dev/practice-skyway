@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, VFC, ChangeEvent } from 'react'
+import React, { useState, useRef, VFC } from 'react'
 import Peer, { MediaConnection } from 'skyway-js'
 
 const skywayKey: string | undefined = process.env.REACT_APP_SKYWAY_KEY
@@ -8,8 +8,6 @@ const peer = new Peer({
 })
 
 let localVideo: MediaStream
-let remoteVideo: MediaStream
-
 let mediaConnection: MediaConnection
 
 const PtoP: VFC = () => {
@@ -87,7 +85,7 @@ const PtoP: VFC = () => {
           <button onClick={handleCall}>発信</button>
           <button onClick={handleClose}>切断</button>
           <button onClick={handleDestroy}>⚠破棄⚠</button>
-          <button onClick={() => setTestCount((t) => t + 1)}>test</button>
+          <button onClick={() => setTestCount((t) => t + 1)}>{`---${testCount}---`}</button>
         </div>
         <div>
           <video width="400px" autoPlay muted playsInline ref={remoteVideoRef}></video>

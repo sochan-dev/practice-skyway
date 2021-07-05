@@ -1,4 +1,4 @@
-import React, { VFC, useState, useRef } from 'react'
+import React, { VFC } from 'react'
 import { UserVideo } from '../components'
 
 type props = {
@@ -7,10 +7,6 @@ type props = {
 
 const VideoArea: VFC<props> = (props) => {
   const users = props.users
-  console.log('users!!!', users)
-  users.map((user, i) => {
-    console.log(`接続ユーザー${i}人目`, user.id)
-  })
   return (
     <div>
       {users.map((user, i) => (

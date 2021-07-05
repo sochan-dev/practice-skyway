@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, VFC, ChangeEvent, createContext, HtmlHTMLAttributes } from 'react'
-import Peer, { MediaConnection, SfuRoom } from 'skyway-js'
+import React, { useState, useRef, VFC, createContext } from 'react'
+import Peer, { SfuRoom } from 'skyway-js'
 import { VideoArea } from './components'
 
 type remoteUser = {
@@ -10,26 +10,18 @@ type remoteUser = {
 const skywayKey: string | undefined = process.env.REACT_APP_SKYWAY_KEY
 const peer = new Peer({
   key: typeof skywayKey === 'string' ? skywayKey : '',
-  debug: 0
+  debug: 3
 })
 
 let localVideo: MediaStream
-let remoteVideo: MediaStream
-
-//let remoteUsers: remoteUser[]
-
-let mediaConnection: MediaConnection
 let room: SfuRoom
 
 export const videoRefArrayContext = createContext<React.RefObject<HTMLVideoElement>[]>([])
-const videoRefs: React.RefObject<HTMLVideoElement>[] = []
 
 const Room: VFC = () => {
   const localVideoRef = useRef<HTMLVideoElement>(null)
-  const remoteVideoRef = useRef<HTMLVideoElement>(null)
 
   const [myId, setMyId] = useState('')
-  const [theirId, setTheirId] = useState('')
   const [roomId, setRoomId] = useState('')
   const [remoteUsersInfo, setRemoteUsersInfo] = useState<remoteUser[]>([])
   const [isTalking, setIsTalking] = useState(false)
@@ -50,44 +42,50 @@ const Room: VFC = () => {
       })
   })
 
-  const handleCall = () => {
-    room = peer.joinRoom(roomId, { mode: 'sfu', stream: localVideo })
-    setRoomEvent()
-  }
-
   const setRoomEvent = () => {
     room.on('open', () => {
-      console.log('open')
+      console.log('!!openイベント発火!!')
     })
 
     room.on('stream', async (stream) => {
       const id = stream.peerId
       const video = stream
-      console.log(`${id}さんのデーター取得`, video)
+      console.log(`!!streamイベント発火-id:${id},video:${video}!!`)
       setRemoteUsersInfo((beforeInfo) => [...beforeInfo, { id: id, video: video }])
-      console.log('setした', remoteUsersInfo)
       setIsTalking(true)
     })
 
     room.on('peerJoin', (peerId) => {
-      console.log('peerJoin', peerId + 'さん')
+      console.log(`!!peerJoinイベント発火-${peerId}が参加!!`)
+    })
+
+    room.on('peerLeave', (peerId) => {
+      console.log(`!!peerLeaveイベント発火-${peerId}が退出!!`)
+      setRemoteUsersInfo((beforeInfo) => beforeInfo.filter((user) => user.id !== peerId))
     })
 
     room.once('close', () => {
-      console.log('close')
+      console.log(`!!closeイベント発火$!!`)
     })
   }
 
-  const handleClose = () => {
+  const handleJoin = () => {
+    room = peer.joinRoom(roomId, { mode: 'sfu', stream: localVideo })
+    setRoomEvent()
+  }
+
+  const handleLeave = () => {
     if (!isTalking) return
-    mediaConnection.close()
+    room.close()
+    setRemoteUsersInfo([])
   }
 
   const handleDestroy = () => {
     console.log('破棄')
     peer.destroy()
+    setRemoteUsersInfo([])
   }
-
+  console.log('実行後', remoteUsersInfo)
   return (
     <>
       <div>
@@ -98,8 +96,8 @@ const Room: VFC = () => {
         <div>{myId}</div>
         <div>
           <input value={roomId} onChange={(e) => setRoomId(e.target.value)}></input>
-          <button onClick={handleCall}>発信</button>
-          <button onClick={handleClose}>切断</button>
+          <button onClick={handleJoin}>発信</button>
+          <button onClick={handleLeave}>切断</button>
           <button onClick={handleDestroy}>⚠破棄⚠</button>
         </div>
         <div>
