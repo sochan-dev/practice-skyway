@@ -16,7 +16,7 @@ const peer = new Peer({
 let localVideo: MediaStream
 let room: SfuRoom
 
-export const videoRefArrayContext = createContext<React.RefObject<HTMLVideoElement>[]>([])
+export const videoRefArrayContext = createContext<React.MutableRefObject<HTMLVideoElement>[]>([])
 
 const Room: VFC = () => {
   const localVideoRef = useRef<HTMLVideoElement>(null)
@@ -66,6 +66,7 @@ const Room: VFC = () => {
 
     room.once('close', () => {
       console.log(`!!closeイベント発火$!!`)
+      setRemoteUsersInfo([])
     })
   }
 
@@ -77,7 +78,6 @@ const Room: VFC = () => {
   const handleLeave = () => {
     if (!isTalking) return
     room.close()
-    setRemoteUsersInfo([])
   }
 
   const handleDestroy = () => {
@@ -85,7 +85,62 @@ const Room: VFC = () => {
     peer.destroy()
     setRemoteUsersInfo([])
   }
-  console.log('実行後', remoteUsersInfo)
+
+  const handleShare = async () => {
+    console.log('共有')
+    const md = navigator.mediaDevices as any //型が正しいのに（：MediaStream）getDisplayMediaを見つけてくれない。現状対処法無い。
+    const localSharedScreen = await md.getDisplayMedia({
+      video: true,
+      audio: false
+    })
+
+    let localAudio: MediaStream | undefined
+    await navigator.mediaDevices
+      .getUserMedia({
+        video: false,
+        audio: true
+      })
+      .then((stream) => {
+        localAudio = stream
+      })
+      .catch((err) => {
+        console.error('device error', err)
+      })
+
+    const combineMediaStream = localAudio
+      ? new MediaStream([...localSharedScreen.getTracks(), ...localAudio.getTracks()])
+      : undefined
+
+    localVideo.getTracks().forEach((track) => track.stop())
+    if (localVideoRef.current) localVideoRef.current.srcObject = null
+
+    if (localVideoRef.current && combineMediaStream) {
+      localVideoRef.current.srcObject = combineMediaStream
+      localVideo = combineMediaStream
+    }
+
+    room.replaceStream(localVideo)
+  }
+
+  const handleShareClose = async () => {
+    const video = await navigator.mediaDevices
+      .getUserMedia({ video: true, audio: true })
+      .then((stream) => {
+        return stream
+      })
+      .catch((err) => {
+        console.error('device error', err)
+      })
+    localVideo.getTracks().forEach((track) => track.stop())
+    if (localVideoRef.current) localVideoRef.current.srcObject = null
+
+    if (localVideoRef.current && video) {
+      localVideoRef.current.srcObject = video
+      localVideo = video
+    }
+    room.replaceStream(localVideo)
+  }
+
   return (
     <>
       <div>
@@ -98,6 +153,8 @@ const Room: VFC = () => {
           <input value={roomId} onChange={(e) => setRoomId(e.target.value)}></input>
           <button onClick={handleJoin}>発信</button>
           <button onClick={handleLeave}>切断</button>
+          <button onClick={handleShare}>画面共有</button>
+          <button onClick={handleShareClose}>画面共有終了</button>
           <button onClick={handleDestroy}>⚠破棄⚠</button>
         </div>
         <div>

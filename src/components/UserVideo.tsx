@@ -14,10 +14,11 @@ const UserVideo: VFC<props> = (props) => {
     if (remoteRef.current) remoteRef.current.srcObject = video
 
     return () => {
+      console.log(`${userId}のUserVideoコンポーネントがアンマウント`)
       video.getTracks().forEach((track) => track.stop())
       if (remoteRef.current) {
         remoteRef.current.srcObject = null
-        remoteRef.current.remove()
+        //remoteRef.current.remove()アンマウントしたのちアンマウントしたことになってる？
       }
     }
   }, [video, userId])
@@ -25,7 +26,7 @@ const UserVideo: VFC<props> = (props) => {
   return (
     <>
       <p>I am:{userId}</p>
-      <video width="320px" ref={remoteRef} autoPlay muted playsInline></video>
+      <video width="320px" ref={remoteRef} autoPlay playsInline></video>
     </>
   )
 }
